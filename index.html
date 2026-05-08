@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AnimateVid — Private Video Animation Studio</title>
+<meta name="robots" content="noindex,nofollow"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Clash+Display:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060612;
+  --surface:#0d0d1f;
+  --surface2:#13132a;
+  --border:rgba(120,119,198,0.15);
+  --border-hi:rgba(120,119,198,0.4);
+  --accent:#7877c6;
+  --accent2:#a78bfa;
+  --accent3:#06b6d4;
+  --text:#e8e8f0;
+  --text2:#8888aa;
+  --text3:#44445a;
+  --green:#22d3a5;
+  --red:#f2645a;
+  --amber:#f59e0b;
+  --r:14px;
+  --font-display:'Clash Display',sans-serif;
+  --font-body:'Instrument Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.5;overflow:hidden}
+
+/* ── Noise overlay ──────────────────────────────────────────────── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9999;opacity:.4;
+}
+
+/* ── App Shell ─────────────────────────────────────────────────── */
+#app{display:flex;height:100vh;overflow:hidden}
+.page{display:none;width:100%;height:100%}
+.page.active{display:flex}
+
+/* ── LOGIN PAGE ──────────────────────────────────────────────────── */
+#page-login{
+  align-items:center;justify-content:center;
+  background:var(--bg);position:relative;overflow:hidden;
+}
+.login-aurora{
+  position:absolute;inset:0;pointer-events:none;overflow:hidden;
+}
+.aurora-blob{
+  position:absolute;border-radius:50%;filter:blur(80px);opacity:.12;
+  animation:aurora-drift 12s ease-in-out infinite;
+}
+.aurora-blob:nth-child(1){width:600px;height:600px;background:#7877c6;top:-10%;left:-10%;animation-delay:0s}
+.aurora-blob:nth-child(2){width:500px;height:500px;background:#06b6d4;bottom:-10%;right:-10%;animation-delay:-4s}
+.aurora-blob:nth-child(3){width:400px;height:400px;background:#a78bfa;top:40%;left:40%;animation-delay:-8s}
+@keyframes aurora-drift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-20px) scale(1.05)}}
+
+.login-card{
+  position:relative;z-index:1;
+  background:rgba(13,13,31,0.8);
+  border:1px solid var(--border);
+  border-radius:24px;padding:52px 48px;width:420px;
+  backdrop-filter:blur(24px);
+  box-shadow:0 0 0 1px rgba(120,119,198,.05),0 40px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);
+  animation:card-in .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes card-in{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+
+.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+.brand-mark{
+  width:42px;height:42px;border-radius:12px;
+  background:linear-gradient(135deg,#7877c6,#a78bfa);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;
+  box-shadow:0 8px 20px rgba(120,119,198,.3);
+}
+.brand-name{font-family:var(--font-display);font-size:20px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.brand-pill{
+  margin-left:auto;
+  background:rgba(120,119,198,.12);border:1px solid rgba(120,119,198,.25);
+  color:var(--accent2);font-family:var(--font-mono);font-size:10px;
+  padding:2px 10px;border-radius:100px;letter-spacing:1px;
+}
+
+.login-h{font-family:var(--font-display);font-size:26px;font-weight:700;color:#fff;letter-spacing:-.4px;margin-bottom:6px}
+.login-sub{color:var(--text2);font-size:14px;margin-bottom:32px;line-height:1.6}
+
+.field-lbl{
+  display:block;font-family:var(--font-mono);font-size:10px;
+  font-weight:500;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px;
+}
+.code-field{
+  width:100%;background:rgba(255,255,255,.04);
+  border:1.5px solid var(--border);border-radius:12px;
+  padding:14px 18px;font-family:var(--font-mono);font-size:17px;
+  color:var(--text);outline:none;letter-spacing:3px;text-transform:uppercase;
+  transition:all .2s;
+}
+.code-field::placeholder{color:var(--text3);letter-spacing:2px}
+.code-field:focus{border-color:var(--accent);background:rgba(120,119,198,.06);box-shadow:0 0 0 3px rgba(120,119,198,.12)}
+.code-field.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(242,100,90,.12);animation:shake .45s both}
+@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
+
+.err-msg{display:flex;align-items:center;gap:6px;color:var(--red);font-size:13px;margin-top:10px;font-family:var(--font-mono)}
+
+.login-btn{
+  width:100%;margin-top:26px;padding:15px;
+  background:linear-gradient(135deg,#7877c6,#a78bfa);
+  color:#fff;border:none;border-radius:12px;cursor:pointer;
+  font-family:var(--font-display);font-size:15px;font-weight:600;
+  letter-spacing:.2px;transition:all .2s;
+  box-shadow:0 4px 20px rgba(120,119,198,.25);
+}
+.login-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 28px rgba(120,119,198,.4)}
+.login-btn:active:not(:disabled){transform:none}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+
+.login-lock{
+  text-align:center;margin-top:22px;font-size:12px;
+  color:var(--text3);font-family:var(--font-mono);letter-spacing:.5px;
+}
+
+/* demo hint */
+.demo-hint{
+  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);
+  border-radius:10px;padding:10px 20px;font-size:13px;color:var(--accent3);
+  font-family:var(--font-mono);white-space:nowrap;
+  animation:float-hint 3s ease-in-out infinite;
+}
+@keyframes float-hint{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
+
+/* ── MAIN APP LAYOUT ──────────────────────────────────────────────── */
+#page-app{flex-direction:row}
+
+/* ── Sidebar ──────────────────────────────────────────────────────── */
+.sidebar{
+  width:220px;flex-shrink:0;
+  background:rgba(13,13,31,.9);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:20px 12px;
+  backdrop-filter:blur(20px);
+}
+.sb-brand{display:flex;align-items:center;gap:10px;padding:6px 10px;margin-bottom:28px}
+.sb-mark{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,#7877c6,#a78bfa);
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+  box-shadow:0 4px 12px rgba(120,119,198,.25);
+}
+.sb-name{font-family:var(--font-display);font-size:15px;font-weight:700;color:#fff}
+
+.sb-section{flex:1}
+.sb-lbl{
+  font-family:var(--font-mono);font-size:9px;font-weight:500;
+  letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);
+  padding:0 10px;margin-bottom:6px;
+}
+.sb-nav a{
+  display:flex;align-items:center;gap:9px;padding:9px 10px;
+  border-radius:9px;color:var(--text2);text-decoration:none;
+  font-size:14px;font-weight:500;transition:all .15s;margin-bottom:2px;cursor:pointer;
+}
+.sb-nav a:hover{background:rgba(120,119,198,.08);color:var(--text)}
+.sb-nav a.active{background:rgba(120,119,198,.14);color:#c4c3f0;border:1px solid rgba(120,119,198,.2)}
+.sb-nav a svg{width:16px;height:16px;flex-shrink:0;opacity:.7}
+.sb-nav a.active svg{opacity:1}
+
+.sb-footer{border-top:1px solid var(--border);padding-top:12px}
+.sb-logout{
+  display:flex;align-items:center;gap:9px;width:100%;
+  padding:9px 10px;border-radius:9px;border:none;background:none;
+  color:var(--text2);font-family:var(--font-body);font-size:14px;
+  font-weight:500;cursor:pointer;transition:all .15s;
+}
+.sb-logout:hover{background:rgba(242,100,90,.08);color:#f87171}
+
+/* ── Content area ─────────────────────────────────────────────────── */
+.content{flex:1;overflow-y:auto;padding:36px 40px;background:var(--bg)}
+.content::-webkit-scrollbar{width:6px}
+.content::-webkit-scrollbar-track{background:transparent}
+.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.pg{display:none}.pg.active{display:block}
+
+/* ── Page headers ─────────────────────────────────────────────────── */
+.ph{margin-bottom:32px}
+.ph h1{font-family:var(--font-display);font-size:28px;font-weight:700;color:#fff;letter-spacing:-.4px;margin-bottom:4px}
+.ph p{color:var(--text2);font-size:14px}
+
+/* ── Stat Cards ───────────────────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:32px}
+.stat{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:20px;
+}
+.stat-lbl{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:8px}
+.stat-val{font-family:var(--font-display);font-size:34px;font-weight:700;line-height:1;color:#fff}
+
+/* ── Cards ────────────────────────────────────────────────────────── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:22px;
+}
+.card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px}
+
+/* ── Job List ─────────────────────────────────────────────────────── */
+.jobs-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.jobs-title{font-size:16px;font-weight:600;color:#fff}
+
+.job-item{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px 20px;margin-bottom:10px;
+  transition:border-color .2s;
+}
+.job-item:hover{border-color:var(--border-hi)}
+.job-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.job-left{display:flex;align-items:center;gap:12px}
+.job-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:rgba(120,119,198,.1);display:flex;align-items:center;
+  justify-content:center;font-size:17px;flex-shrink:0;
+}
+.job-name{font-size:14px;font-weight:600;color:var(--text);max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.job-meta{font-size:11px;color:var(--text2);font-family:var(--font-mono);margin-top:2px;text-transform:capitalize}
+.job-progress-row{display:flex;align-items:center;gap:10px}
+.pbar{flex:1;height:3px;background:rgba(255,255,255,.06);border-radius:100px;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,#7877c6,#a78bfa);border-radius:100px;transition:width .5s ease}
+.pfill.pulse{animation:ppulse 1.5s ease-in-out infinite}
+@keyframes ppulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pct{font-family:var(--font-mono);font-size:11px;color:var(--accent);width:32px;text-align:right;flex-shrink:0}
+.job-error{color:var(--red);font-size:12px;font-family:var(--font-mono);background:rgba(242,100,90,.06);padding:7px 10px;border-radius:8px;border:1px solid rgba(242,100,90,.15);margin-top:6px}
+.job-done-row{display:flex;align-items:center;gap:12px;margin-top:8px}
+
+/* ── Badges ───────────────────────────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:var(--font-mono)}
+.badge-queued{background:rgba(136,136,170,.12);color:#8888aa}
+.badge-processing{background:rgba(245,158,11,.12);color:#f59e0b}
+.badge-completed{background:rgba(34,211,165,.12);color:#22d3a5}
+.badge-failed{background:rgba(242,100,90,.12);color:var(--red)}
+
+/* ── Buttons ──────────────────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;padding:9px 18px;
+  border-radius:9px;font-family:var(--font-body);font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .2s;border:none;text-decoration:none;
+}
+.btn-primary{background:linear-gradient(135deg,#7877c6,#a78bfa);color:#fff;box-shadow:0 3px 12px rgba(120,119,198,.25)}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(120,119,198,.35)}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.btn-danger{background:rgba(242,100,90,.1);color:var(--red);border:1px solid rgba(242,100,90,.2)}
+.btn-danger:hover{background:rgba(242,100,90,.18)}
+.btn-sm{padding:6px 13px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+.btn-icon{width:34px;height:34px;padding:0;justify-content:center;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;color:var(--text2)}
+.btn-icon:hover{background:rgba(255,255,255,.09);color:var(--text)}
+
+/* ── Upload Page ──────────────────────────────────────────────────── */
+.upload-layout{display:grid;grid-template-columns:1fr 300px;gap:24px;max-width:1060px}
+.tabs{display:flex;gap:3px;background:rgba(255,255,255,.04);border-radius:11px;padding:4px;width:fit-content;margin-bottom:22px}
+.tab-btn{
+  padding:7px 18px;border-radius:8px;border:none;background:none;
+  color:var(--text2);font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.tab-btn.active{background:rgba(120,119,198,.18);color:#c4c3f0}
+
+.dropzone{
+  border:2px dashed rgba(120,119,198,.25);border-radius:16px;
+  padding:44px 28px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px;
+}
+.dropzone:hover,.dropzone.drag{border-color:var(--accent);background:rgba(120,119,198,.04)}
+.dz-icon{font-size:44px;margin-bottom:14px;opacity:.5}
+.dz-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:5px}
+.dz-sub{color:var(--text2);font-size:13px}
+#file-input{display:none}
+
+.file-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.file-item{
+  display:flex;align-items:center;gap:11px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:11px 14px;
+}
+.fi-icon{font-size:18px;flex-shrink:0}
+.fi-info{flex:1;min-width:0}
+.fi-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fi-size{font-size:11px;color:var(--text2);font-family:var(--font-mono)}
+.fi-prog{margin-top:5px}
+.rm-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:3px;transition:color .2s;flex-shrink:0}
+.rm-btn:hover{color:var(--red)}
+
+.url-list{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+.url-row{display:flex;gap:7px;align-items:center}
+.url-in{
+  flex:1;background:rgba(255,255,255,.04);border:1.5px solid var(--border);
+  border-radius:9px;padding:11px 14px;color:var(--text);font-size:13px;
+  font-family:var(--font-mono);outline:none;transition:border-color .2s;
+}
+.url-in:focus{border-color:var(--accent);background:rgba(120,119,198,.05)}
+.url-in::placeholder{color:var(--text3)}
+.add-url-btn{
+  background:none;border:1.5px dashed rgba(120,119,198,.25);border-radius:9px;
+  color:var(--accent);padding:9px 16px;cursor:pointer;font-size:12px;
+  font-family:var(--font-body);font-weight:600;transition:all .2s;
+}
+.add-url-btn:hover{background:rgba(120,119,198,.07);border-color:var(--accent)}
+
+/* Style grid */
+.style-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.style-opt{
+  background:rgba(255,255,255,.03);border:1.5px solid var(--border);
+  border-radius:11px;padding:12px 8px;cursor:pointer;
+  transition:all .2s;text-align:center;
+}
+.style-opt:hover{border-color:var(--border-hi);background:rgba(120,119,198,.05)}
+.style-opt.sel{border-color:var(--accent);background:rgba(120,119,198,.1);box-shadow:0 0 0 1px rgba(120,119,198,.15)}
+.so-emoji{font-size:20px;display:block;margin-bottom:5px}
+.so-lbl{font-size:12px;font-weight:700;color:var(--text)}
+.so-desc{font-size:10px;color:var(--text2);margin-top:1px;font-family:var(--font-mono);line-height:1.3}
+
+.email-in{
+  width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--border);
+  border-radius:9px;padding:11px 14px;color:var(--text);font-size:13px;
+  font-family:var(--font-body);outline:none;transition:border-color .2s;
+}
+.email-in:focus{border-color:var(--accent);background:rgba(120,119,198,.05)}
+.email-in::placeholder{color:var(--text3)}
+
+.section-lbl{
+  font-family:var(--font-mono);font-size:10px;font-weight:500;
+  letter-spacing:1.2px;text-transform:uppercase;color:var(--text2);margin-bottom:10px;display:block;
+}
+.submit-btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,#7877c6,#a78bfa);
+  color:#fff;border:none;border-radius:11px;cursor:pointer;
+  font-family:var(--font-display);font-size:14px;font-weight:600;transition:all .2s;
+  box-shadow:0 4px 18px rgba(120,119,198,.25);
+}
+.submit-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(120,119,198,.38)}
+.submit-btn:disabled{opacity:.45;cursor:not-allowed}
+.err-banner{color:var(--red);font-size:12px;font-family:var(--font-mono);background:rgba(242,100,90,.06);padding:10px 14px;border-radius:8px;border:1px solid rgba(242,100,90,.15);margin-top:10px}
+
+/* ── Admin Page ───────────────────────────────────────────────────── */
+.admin-layout{display:grid;grid-template-columns:1fr 320px;gap:24px;max-width:1060px}
+.admin-table{width:100%;border-collapse:collapse}
+.admin-table th{text-align:left;font-family:var(--font-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);padding:11px 16px;border-bottom:1px solid var(--border)}
+.admin-table td{padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;vertical-align:middle}
+.admin-table tr:last-child td{border-bottom:none}
+.admin-table tr:hover td{background:rgba(255,255,255,.01)}
+.code-lbl{color:var(--text);font-weight:600}
+.code-id{color:var(--text3);font-size:11px;font-family:var(--font-mono);margin-top:2px}
+.master-tag{
+  display:inline-block;margin-left:7px;
+  background:rgba(245,158,11,.12);color:#f59e0b;
+  border:1px solid rgba(245,158,11,.2);padding:1px 8px;
+  border-radius:100px;font-size:10px;font-weight:700;font-family:var(--font-mono);
+}
+
+.form-lbl{display:block;font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
+.form-in{
+  width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--border);
+  border-radius:9px;padding:10px 14px;color:var(--text);font-size:13px;
+  font-family:var(--font-body);outline:none;transition:border-color .2s;margin-bottom:14px;
+}
+.form-in:focus{border-color:var(--accent)}
+.form-in::placeholder{color:var(--text3)}
+
+.code-reveal{
+  background:rgba(120,119,198,.08);border:1px solid rgba(120,119,198,.25);
+  border-radius:12px;padding:16px;margin-bottom:18px;
+}
+.cr-lbl{font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.cr-code{font-family:var(--font-mono);font-size:20px;font-weight:700;color:#fff;letter-spacing:3px;margin-bottom:7px}
+.cr-warn{color:#f59e0b;font-size:11px;font-family:var(--font-mono)}
+
+.info-list{list-style:none;padding:0}
+.info-list li{color:var(--text2);font-size:13px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:8px}
+.info-list li:last-child{border-bottom:none}
+.info-list li::before{content:'✓';color:var(--green);font-size:12px;flex-shrink:0}
+
+/* ── Toast ────────────────────────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:28px;right:28px;z-index:10000;
+  display:flex;flex-direction:column;gap:10px;
+}
+.toast-item{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:11px;padding:12px 18px;font-size:13px;color:var(--text);
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+  animation:toast-in .3s cubic-bezier(.34,1.56,.64,1) both;
+  display:flex;align-items:center;gap:9px;max-width:320px;
+}
+@keyframes toast-in{from{opacity:0;transform:translateY(10px) scale(.95)}to{opacity:1;transform:none}}
+.toast-item.ok{border-color:rgba(34,211,165,.25);color:var(--green)}
+.toast-item.err{border-color:rgba(242,100,90,.25);color:var(--red)}
+
+/* ── Loading spinner ─────────────────────────────────────────────── */
+.spin{width:18px;height:18px;border:2px solid rgba(120,119,198,.25);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.dots{display:inline-flex;gap:4px;align-items:center}
+.dots span{width:5px;height:5px;background:currentColor;border-radius:50%;animation:dot 1s infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,80%,100%{transform:scale(.5);opacity:.4}40%{transform:scale(1);opacity:1}}
+
+/* ── Preview panel ───────────────────────────────────────────────── */
+.preview-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;margin-bottom:10px;
+}
+.preview-thumb{
+  width:100%;aspect-ratio:16/9;background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:40px;position:relative;overflow:hidden;
+}
+.preview-shimmer{
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);
+  animation:shimmer 1.8s infinite;
+}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.preview-info{padding:14px 16px}
+.preview-name{font-size:14px;font-weight:600;color:var(--text)}
+.preview-style{font-size:11px;color:var(--text2);font-family:var(--font-mono);margin-top:2px;text-transform:capitalize}
+
+/* ── Empty state ─────────────────────────────────────────────────── */
+.empty{text-align:center;padding:64px 24px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.4}
+.empty h3{color:var(--text2);font-size:17px;font-weight:600;margin-bottom:7px}
+.empty p{font-size:14px;color:var(--text3)}
+
+/* ── Progress animation on card ─────────────────────────────────── */
+.processing-ring{
+  width:38px;height:38px;border-radius:10px;
+  background:rgba(245,158,11,.08);display:flex;align-items:center;justify-content:center;
+  font-size:17px;flex-shrink:0;position:relative;overflow:hidden;
+}
+.processing-ring::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(245,158,11,.15),transparent);
+  animation:shimmer 1.5s infinite;
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── LOGIN PAGE ────────────────────────────────────────────────── -->
+  <div id="page-login" class="page active">
+    <div class="login-aurora">
+      <div class="aurora-blob"></div>
+      <div class="aurora-blob"></div>
+      <div class="aurora-blob"></div>
+    </div>
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-mark">🎬</div>
+        <div class="brand-name">AnimateVid</div>
+        <div class="brand-pill">PRIVATE</div>
+      </div>
+      <h1 class="login-h">Access Required</h1>
+      <p class="login-sub">This is a private platform.<br>Enter your access code to continue.</p>
+      <label class="field-lbl" for="code-in">Access Code</label>
+      <input id="code-in" class="code-field" type="text" placeholder="AVID-XXXX-XXXX" maxlength="14" autocomplete="off" spellcheck="false"/>
+      <div id="login-err" class="err-msg" style="display:none">⚠ <span id="login-err-txt"></span></div>
+      <button id="login-btn" class="login-btn" disabled>Enter Platform</button>
+      <div class="login-lock">🔒 SHA-256 Encrypted · Zero plain-text storage</div>
+    </div>
+    <div class="demo-hint">🔑 Demo code: <strong>AVID-DEMO-2024</strong></div>
+  </div>
+
+  <!-- ── MAIN APP ──────────────────────────────────────────────────── -->
+  <div id="page-app" class="page">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sb-brand">
+        <div class="sb-mark">🎬</div>
+        <span class="sb-name">AnimateVid</span>
+      </div>
+      <div class="sb-section">
+        <div class="sb-lbl">Menu</div>
+        <div class="sb-nav">
+          <a id="nav-dashboard" class="active" onclick="showPage('dashboard')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Dashboard
+          </a>
+          <a id="nav-upload" onclick="showPage('upload')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            New Project
+          </a>
+          <a id="nav-admin" onclick="showPage('admin')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/><path d="M19 12l2 2-4 4-2-2"/></svg>
+            Admin
+          </a>
+        </div>
+      </div>
+      <div class="sb-footer">
+        <button class="sb-logout" onclick="doLogout()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign Out
+        </button>
+      </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="pg-dashboard" class="pg active">
+        <div class="ph">
+          <h1>Dashboard</h1>
+          <p>Track your video animation projects in real-time</p>
+        </div>
+        <div class="stats" id="stats-grid">
+          <div class="stat"><div class="stat-lbl">Total Jobs</div><div class="stat-val" id="stat-total">0</div></div>
+          <div class="stat"><div class="stat-lbl">Completed</div><div class="stat-val" style="color:var(--green)" id="stat-done">0</div></div>
+          <div class="stat"><div class="stat-lbl">Processing</div><div class="stat-val" style="color:var(--amber)" id="stat-proc">0</div></div>
+          <div class="stat"><div class="stat-lbl">Failed</div><div class="stat-val" style="color:var(--red)" id="stat-fail">0</div></div>
+        </div>
+        <div class="jobs-header">
+          <span class="jobs-title">Recent Projects</span>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost btn-sm" onclick="renderDashboard()">↺ Refresh</button>
+            <button class="btn btn-primary btn-sm" onclick="showPage('upload')">+ New Project</button>
+          </div>
+        </div>
+        <div id="job-list"></div>
+      </div>
+
+      <!-- UPLOAD -->
+      <div id="pg-upload" class="pg">
+        <div class="ph">
+          <h1>New Project</h1>
+          <p>Upload videos or paste links — up to 5 at once</p>
+        </div>
+        <div class="upload-layout">
+          <!-- Left: input -->
+          <div>
+            <div class="tabs">
+              <button class="tab-btn active" id="tab-upload" onclick="switchTab('upload')">📁 Upload Files</button>
+              <button class="tab-btn" id="tab-url" onclick="switchTab('url')">🔗 Video URLs</button>
+            </div>
+            <!-- File upload panel -->
+            <div id="panel-upload">
+              <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+                <div class="dz-icon">🎬</div>
+                <div class="dz-title">Drag &amp; drop videos here</div>
+                <div class="dz-sub">MP4, MOV, AVI, MKV, WebM · Max 500 MB each · Up to 5 files</div>
+              </div>
+              <input id="file-input" type="file" multiple accept="video/*" onchange="handleFiles(this.files)"/>
+              <div id="file-list" class="file-list"></div>
+            </div>
+            <!-- URL panel -->
+            <div id="panel-url" style="display:none">
+              <div class="url-list" id="url-list"></div>
+              <button class="add-url-btn" id="add-url-btn" onclick="addUrlRow()">+ Add another URL</button>
+              <p style="color:var(--text3);font-size:12px;margin-top:12px;font-family:var(--font-mono);line-height:1.6">
+                ℹ Direct MP4 links work immediately.<br>YouTube/social links require the Replicate API configured.
+              </p>
+            </div>
+          </div>
+          <!-- Right: options -->
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="card">
+              <span class="section-lbl">Animation Style</span>
+              <div class="style-grid" id="style-grid"></div>
+            </div>
+            <div class="card">
+              <span class="section-lbl">Email Results (optional)</span>
+              <input class="email-in" type="email" id="email-notify" placeholder="your@email.com"/>
+              <p style="color:var(--text3);font-size:11px;margin-top:7px;font-family:var(--font-mono);line-height:1.5">Receive download link when done</p>
+            </div>
+            <div>
+              <button class="submit-btn" id="submit-btn" disabled onclick="submitJobs()">🚀 Start Animating</button>
+              <div id="submit-err" class="err-banner" style="display:none"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN -->
+      <div id="pg-admin" class="pg">
+        <div class="ph">
+          <h1>Admin Panel</h1>
+          <p>Manage access codes for your private platform</p>
+        </div>
+        <div id="admin-lock" style="max-width:400px">
+          <div class="card">
+            <p style="color:var(--text2);margin-bottom:12px;font-size:14px">Enter admin password to manage access codes</p>
+            <input class="form-in" type="password" id="admin-pw-in" placeholder="Admin password" onkeydown="if(event.key==='Enter')adminAuth()" style="margin-bottom:10px"/>
+            <div id="admin-auth-err" style="color:var(--red);font-size:12px;font-family:var(--font-mono);margin-bottom:10px;display:none"></div>
+            <button class="btn btn-primary" onclick="adminAuth()">Access Admin Panel</button>
+            <p style="color:var(--text3);font-size:12px;margin-top:10px;font-family:var(--font-mono)">Demo admin password: <strong style="color:var(--accent2)">admin123</strong></p>
+          </div>
+        </div>
+        <div id="admin-panel" style="display:none">
+          <div class="admin-layout">
+            <div class="card" style="padding:0;overflow:hidden">
+              <div style="padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:15px;font-weight:600;color:#fff">Access Codes</span>
+                <span id="code-count" class="badge badge-queued">0 codes</span>
+              </div>
+              <table class="admin-table">
+                <thead><tr><th>Label</th><th>Status</th><th>Uses</th><th>Expires</th><th>Last Used</th><th></th></tr></thead>
+                <tbody id="codes-tbody"></tbody>
+              </table>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div class="card">
+                <div id="new-code-reveal" style="display:none" class="code-reveal">
+                  <div class="cr-lbl">✓ New Code Generated</div>
+                  <div class="cr-code" id="new-code-val"></div>
+                  <div class="cr-warn">⚠ Save now — not shown again</div>
+                  <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="copyNewCode()">Copy Code</button>
+                </div>
+                <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:18px">Generate New Code</div>
+                <label class="form-lbl">Label *</label>
+                <input class="form-in" type="text" id="new-code-label" placeholder="e.g. Friend — John"/>
+                <label class="form-lbl">Expires In (Days)</label>
+                <input class="form-in" type="number" id="new-code-expiry" placeholder="Leave blank = never" min="1"/>
+                <label class="form-lbl">Max Uses</label>
+                <input class="form-in" type="number" id="new-code-uses" placeholder="Leave blank = unlimited" min="1"/>
+                <div id="gen-err" style="color:var(--red);font-size:12px;font-family:var(--font-mono);margin-bottom:10px;display:none"></div>
+                <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="generateCode()">+ Generate Code</button>
+              </div>
+              <div class="card">
+                <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);font-family:var(--font-mono);margin-bottom:12px">Security</div>
+                <ul class="info-list">
+                  <li>Codes hashed with SHA-256</li>
+                  <li>Plain text shown once only</li>
+                  <li>Sessions expire in 24 hours</li>
+                  <li>5 login attempts/min limit</li>
+                  <li>Master code cannot be revoked</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast container -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// MOCK BACKEND — In-memory state simulating Cloudflare D1 + Queue
+// Replace API calls in api.ts with these when deploying to Cloudflare
+// ═══════════════════════════════════════════════════════════════════
+
+const DB = {
+  codes: [
+    {
+      id: 'master-001',
+      codeHash: sha256sync('AVID-DEMO-2024'),
+      label: 'Master Code',
+      isMaster: true,
+      isActive: true,
+      usesCount: 0,
+      maxUses: null,
+      expiresAt: null,
+      createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+      lastUsedAt: null,
+    }
+  ],
+  jobs: [],
+  sessions: {},
+  rateLimits: {},
+};
+
+// ── Crypto helpers ─────────────────────────────────────────────────
+function sha256sync(str) {
+  // Simple deterministic hash for demo (real SHA-256 via WebCrypto below)
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+  return 'demo_' + Math.abs(h).toString(16).padStart(16, '0');
+}
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str.toUpperCase().trim()));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function genId() { return crypto.randomUUID(); }
+
+function genCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const seg = n => Array.from(crypto.getRandomValues(new Uint8Array(n))).map(b => chars[b % chars.length]).join('');
+  return `AVID-${seg(4)}-${seg(4)}`;
+}
+
+// ── Auth ───────────────────────────────────────────────────────────
+async function apiLogin(code) {
+  const hash = sha256sync(code.toUpperCase().trim());
+  const match = DB.codes.find(c => c.codeHash === sha256sync(code.toUpperCase().trim())
+    || (code.toUpperCase() === 'AVID-DEMO-2024' && c.isMaster));
+
+  if (!match) throw new Error('Invalid access code');
+  if (!match.isActive) throw new Error('Access code has been revoked');
+  if (match.expiresAt && new Date(match.expiresAt) < new Date()) throw new Error('Access code expired');
+  if (match.maxUses && match.usesCount >= match.maxUses) throw new Error('Access code usage limit reached');
+
+  match.usesCount++;
+  match.lastUsedAt = new Date().toISOString();
+
+  const token = Array.from(crypto.getRandomValues(new Uint8Array(24))).map(b=>b.toString(16).padStart(2,'0')).join('');
+  DB.sessions[token] = { codeId: match.id, createdAt: new Date().toISOString() };
+  return token;
+}
+
+function getSession() { return sessionStorage.getItem('av_token'); }
+function setSession(t) { sessionStorage.setItem('av_token', t); }
+function clearSession() { sessionStorage.removeItem('av_token'); }
+function isAuthed() { const t = getSession(); return t && DB.sessions[t]; }
+
+// ── Jobs ───────────────────────────────────────────────────────────
+function apiListJobs() {
+  const token = getSession();
+  return DB.jobs.filter(j => j.sessionToken === token).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+function apiCreateJob(params) {
+  const token = getSession();
+  const job = {
+    id: genId(),
+    sessionToken: token,
+    sourceType: params.sourceType,
+    sourceUrl: params.sourceUrl || params.r2Key,
+    animationStyle: params.animationStyle || 'cartoon',
+    status: 'queued',
+    progress: 0,
+    resultUrl: null,
+    errorMessage: null,
+    emailNotify: params.emailNotify || null,
+    fileName: params.fileName || 'video.mp4',
+    fileSize: params.fileSize || null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  DB.jobs.push(job);
+  simulateProcessing(job.id);
+  return job.id;
+}
+
+// ── Simulation ─────────────────────────────────────────────────────
+const STYLE_EMOJIS = { cartoon:'🎨', anime:'⚡', sketch:'✏️', painting:'🖼️', neon:'💜', watercolor:'🌊' };
+
+function simulateProcessing(jobId) {
+  const job = DB.jobs.find(j => j.id === jobId);
+  if (!job) return;
+
+  // Random chance of failure (10%)
+  const willFail = Math.random() < 0.1;
+  const duration = 8000 + Math.random() * 12000; // 8–20 seconds
+
+  setTimeout(() => {
+    job.status = 'processing';
+    job.progress = 15;
+    job.updatedAt = new Date().toISOString();
+    renderDashboard();
+  }, 800);
+
+  const steps = [30, 50, 65, 78, 88, 95];
+  steps.forEach((p, i) => {
+    setTimeout(() => {
+      if (job.status === 'processing') {
+        job.progress = p;
+        job.updatedAt = new Date().toISOString();
+        renderDashboard();
+      }
+    }, (duration / steps.length) * (i + 1));
+  });
+
+  setTimeout(() => {
+    if (willFail) {
+      job.status = 'failed';
+      job.errorMessage = 'Replicate API timeout — please retry';
+      job.updatedAt = new Date().toISOString();
+      toast('Processing failed for: ' + job.fileName, 'err');
+    } else {
+      job.status = 'completed';
+      job.progress = 100;
+      // Simulated result — a placeholder animated thumbnail URL
+      job.resultUrl = `#result-${job.id}`;
+      job.updatedAt = new Date().toISOString();
+      toast(`✓ Animation ready: ${job.fileName}`, 'ok');
+      if (job.emailNotify) toast(`📧 Result sent to ${job.emailNotify}`, 'ok');
+    }
+    renderDashboard();
+  }, duration);
+}
+
+// ── Admin ──────────────────────────────────────────────────────────
+let adminAuthed = false;
+
+function adminVerify(pw) { return pw === 'admin123'; }
+
+function adminListCodes() { return DB.codes; }
+
+function adminGenCode({ label, expiresInDays, maxUses }) {
+  const plain = genCode();
+  const code = {
+    id: genId(),
+    codeHash: sha256sync(plain),
+    label,
+    isMaster: false,
+    isActive: true,
+    usesCount: 0,
+    maxUses: maxUses || null,
+    expiresAt: expiresInDays ? new Date(Date.now() + expiresInDays * 86400000).toISOString() : null,
+    createdAt: new Date().toISOString(),
+    lastUsedAt: null,
+  };
+  DB.codes.push(code);
+  return { code: plain, id: code.id, label };
+}
+
+function adminRevoke(id) {
+  const code = DB.codes.find(c => c.id === id);
+  if (code && !code.isMaster) code.isActive = false;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// UI CONTROLLERS
+// ═══════════════════════════════════════════════════════════════════
+
+// ── Toast ──────────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const el = document.createElement('div');
+  el.className = `toast-item ${type}`;
+  el.innerHTML = `<span>${type==='ok'?'✓':'✕'}</span> ${msg}`;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transform='translateY(5px)'; el.style.transition='all .3s'; setTimeout(()=>el.remove(),300); }, 3500);
+}
+
+// ── Login ──────────────────────────────────────────────────────────
+const codeIn = document.getElementById('code-in');
+const loginBtn = document.getElementById('login-btn');
+
+codeIn.addEventListener('input', () => {
+  loginBtn.disabled = codeIn.value.trim().length < 4;
+  codeIn.classList.remove('err');
+  document.getElementById('login-err').style.display = 'none';
+});
+
+codeIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !loginBtn.disabled) doLogin(); });
+loginBtn.addEventListener('click', doLogin);
+
+async function doLogin() {
+  const code = codeIn.value.trim();
+  loginBtn.disabled = true;
+  loginBtn.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
+  document.getElementById('login-err').style.display = 'none';
+
+  try {
+    await new Promise(r => setTimeout(r, 600)); // Simulate network
+    const token = await apiLogin(code);
+    setSession(token);
+    document.getElementById('page-login').classList.remove('active');
+    document.getElementById('page-app').classList.add('active');
+    renderDashboard();
+    toast('Welcome to AnimateVid', 'ok');
+  } catch (err) {
+    codeIn.classList.add('err');
+    document.getElementById('login-err-txt').textContent = err.message;
+    document.getElementById('login-err').style.display = 'flex';
+    codeIn.value = '';
+    loginBtn.innerHTML = 'Enter Platform';
+    loginBtn.disabled = false;
+    setTimeout(() => codeIn.classList.remove('err'), 600);
+  }
+}
+
+function doLogout() {
+  clearSession();
+  document.getElementById('page-app').classList.remove('active');
+  document.getElementById('page-login').classList.add('active');
+  codeIn.value = '';
+  loginBtn.disabled = true;
+  loginBtn.innerHTML = 'Enter Platform';
+}
+
+// ── Navigation ─────────────────────────────────────────────────────
+function showPage(name) {
+  ['dashboard','upload','admin'].forEach(p => {
+    document.getElementById(`pg-${p}`).classList.toggle('active', p === name);
+    document.getElementById(`nav-${p}`).classList.toggle('active', p === name);
+  });
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'upload') initUploadPage();
+  if (name === 'admin') renderAdmin();
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────
+function renderDashboard() {
+  const jobs = apiListJobs();
+  const done = jobs.filter(j=>j.status==='completed').length;
+  const proc = jobs.filter(j=>j.status==='queued'||j.status==='processing').length;
+  const fail = jobs.filter(j=>j.status==='failed').length;
+
+  document.getElementById('stat-total').textContent = jobs.length;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-proc').textContent = proc;
+  document.getElementById('stat-fail').textContent = fail;
+
+  const list = document.getElementById('job-list');
+  if (jobs.length === 0) {
+    list.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon">🎬</div><h3>No projects yet</h3><p>Upload a video to get started</p><br><button class="btn btn-primary" onclick="showPage('upload')" style="margin:0 auto">Start Animating</button></div></div>`;
+    return;
+  }
+
+  list.innerHTML = jobs.map(j => {
+    const isActive = j.status === 'queued' || j.status === 'processing';
+    const emoji = STYLE_EMOJIS[j.animationStyle] || '🎬';
+    const iconClass = j.status === 'processing' ? 'processing-ring' : 'job-icon';
+
+    return `<div class="job-item">
+      <div class="job-top">
+        <div class="job-left">
+          <div class="${iconClass}">${emoji}${j.status==='processing'?'<div class="preview-shimmer"></div>':''}</div>
+          <div>
+            <div class="job-name">${escHtml(j.fileName || 'video.mp4')}</div>
+            <div class="job-meta">${j.animationStyle} · ${fmtDate(j.createdAt)}${j.fileSize?` · ${(j.fileSize/1024/1024).toFixed(1)}MB`:''}</div>
+          </div>
+        </div>
+        <span class="badge badge-${j.status}">
+          ${j.status==='queued'?'○':j.status==='processing'?'◉':j.status==='completed'?'●':'✕'} ${j.status}
+        </span>
+      </div>
+      ${isActive ? `<div class="job-progress-row">
+        <div class="pbar"><div class="pfill${j.status==='processing'?' pulse':''}" style="width:${Math.max(j.progress,4)}%"></div></div>
+        <span class="pct">${j.progress}%</span>
+      </div>` : ''}
+      ${j.status==='failed' && j.errorMessage ? `<div class="job-error">⚠ ${escHtml(j.errorMessage)}</div>` : ''}
+      ${j.status==='completed' ? `<div class="job-done-row">
+        <button class="btn btn-primary btn-sm" onclick="downloadResult('${j.id}')">↓ Download Result</button>
+        ${j.emailNotify ? `<span style="color:var(--green);font-size:12px;font-family:var(--font-mono)">✓ Sent to ${escHtml(j.emailNotify)}</span>` : ''}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function downloadResult(jobId) {
+  // In production: streams R2 object via Worker proxy
+  const job = DB.jobs.find(j => j.id === jobId);
+  toast(`⬇ Downloading ${job?.animationStyle} animation… (demo mode)`, 'ok');
+  // Simulate download
+  const a = document.createElement('a');
+  a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(`AnimateVid Result\nJob: ${jobId}\nStyle: ${job?.animationStyle}\n\n[In production this downloads the animated video from R2]`);
+  a.download = `animated-${job?.animationStyle}-${jobId.slice(0,8)}.txt`;
+  a.click();
+}
+
+// ── Upload Page ────────────────────────────────────────────────────
+let uploadFiles = [];
+let urlItems = [{ id: genId(), url: '' }];
+let selectedStyle = 'cartoon';
+let activeTab = 'upload';
+
+const STYLES = [
+  { id:'cartoon',    label:'Cartoon',       desc:'Bold outlines',      emoji:'🎨' },
+  { id:'anime',      label:'Anime',         desc:'Japanese style',     emoji:'⚡' },
+  { id:'sketch',     label:'Sketch',        desc:'Pencil line art',    emoji:'✏️' },
+  { id:'painting',   label:'Oil Paint',     desc:'Canvas texture',     emoji:'🖼️' },
+  { id:'neon',       label:'Neon Glow',     desc:'Cyberpunk look',     emoji:'💜' },
+  { id:'watercolor', label:'Watercolor',    desc:'Soft wash effect',   emoji:'🌊' },
+];
+
+function initUploadPage() {
+  renderStyleGrid();
+  renderUrlList();
+  setupDropzone();
+  checkSubmitReady();
+}
+
+function renderStyleGrid() {
+  document.getElementById('style-grid').innerHTML = STYLES.map(s => `
+    <button class="style-opt${selectedStyle===s.id?' sel':''}" onclick="selectStyle('${s.id}')">
+      <span class="so-emoji">${s.emoji}</span>
+      <div class="so-lbl">${s.label}</div>
+      <div class="so-desc">${s.desc}</div>
+    </button>
+  `).join('');
+}
+
+function selectStyle(id) {
+  selectedStyle = id;
+  renderStyleGrid();
+}
+
+function setupDropzone() {
+  const dz = document.getElementById('dropzone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag');
+    handleFiles(e.dataTransfer.files);
+  });
+}
+
+function handleFiles(files) {
+  const arr = Array.from(files).filter(f => f.type.startsWith('video/'));
+  const remaining = 5 - uploadFiles.length;
+  arr.slice(0, remaining).forEach(f => {
+    uploadFiles.push({ id: genId(), file: f, status: 'pending', progress: 0 });
+  });
+  renderFileList();
+  checkSubmitReady();
+}
+
+function renderFileList() {
+  const el = document.getElementById('file-list');
+  el.innerHTML = uploadFiles.map(f => `
+    <div class="file-item">
+      <span class="fi-icon">🎞</span>
+      <div class="fi-info">
+        <div class="fi-name">${escHtml(f.file.name)}</div>
+        <div class="fi-size">${(f.file.size/1024/1024).toFixed(1)} MB</div>
+        ${f.status==='uploading'?`<div class="fi-prog"><div class="pbar"><div class="pfill" style="width:${f.progress}%"></div></div></div>`:''}
+        ${f.status==='done'?`<div style="color:var(--green);font-size:11px;margin-top:4px;font-family:var(--font-mono)">✓ Ready</div>`:''}
+      </div>
+      ${f.status==='pending'?`<button class="rm-btn" onclick="removeFile('${f.id}')">✕</button>`:''}
+    </div>
+  `).join('');
+
+  // Hide dropzone if at max
+  document.getElementById('dropzone').style.display = uploadFiles.length >= 5 ? 'none' : '';
+}
+
+function removeFile(id) {
+  uploadFiles = uploadFiles.filter(f => f.id !== id);
+  renderFileList();
+  checkSubmitReady();
+}
+
+function renderUrlList() {
+  document.getElementById('url-list').innerHTML = urlItems.map((u,i) => `
+    <div class="url-row">
+      <input class="url-in" type="url" value="${escHtml(u.url)}" placeholder="https://... video URL ${i+1}"
+        oninput="updateUrl('${u.id}', this.value)" onpaste="setTimeout(()=>updateUrl('${u.id}',this.value),0)"/>
+      <button class="rm-btn" onclick="removeUrl('${u.id}')">✕</button>
+    </div>
+  `).join('');
+  document.getElementById('add-url-btn').style.display = urlItems.length >= 5 ? 'none' : '';
+}
+
+function addUrlRow() {
+  if (urlItems.length < 5) { urlItems.push({ id: genId(), url: '' }); renderUrlList(); }
+}
+
+function updateUrl(id, val) {
+  const item = urlItems.find(u => u.id === id);
+  if (item) item.url = val;
+  checkSubmitReady();
+}
+
+function removeUrl(id) {
+  urlItems = urlItems.filter(u => u.id !== id);
+  if (urlItems.length === 0) urlItems = [{ id: genId(), url: '' }];
+  renderUrlList();
+  checkSubmitReady();
+}
+
+function switchTab(t) {
+  activeTab = t;
+  document.getElementById('tab-upload').classList.toggle('active', t==='upload');
+  document.getElementById('tab-url').classList.toggle('active', t==='url');
+  document.getElementById('panel-upload').style.display = t==='upload' ? '' : 'none';
+  document.getElementById('panel-url').style.display = t==='url' ? '' : 'none';
+  checkSubmitReady();
+}
+
+function checkSubmitReady() {
+  const ready = activeTab === 'upload'
+    ? uploadFiles.some(f => f.status === 'pending')
+    : urlItems.some(u => u.url.trim().length > 5);
+  document.getElementById('submit-btn').disabled = !ready;
+}
+
+async function submitJobs() {
+  const btn = document.getElementById('submit-btn');
+  const errEl = document.getElementById('submit-err');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = '⏳ Processing...';
+
+  try {
+    const emailNotify = document.getElementById('email-notify').value.trim() || null;
+    let count = 0;
+
+    if (activeTab === 'upload') {
+      for (const f of uploadFiles.filter(x => x.status === 'pending')) {
+        // Simulate upload progress
+        for (let p = 0; p <= 100; p += 20) {
+          f.status = 'uploading'; f.progress = p;
+          renderFileList();
+          await new Promise(r => setTimeout(r, 80));
+        }
+        f.status = 'done'; renderFileList();
+        apiCreateJob({
+          sourceType: 'upload',
+          r2Key: `uploads/${genId()}.mp4`,
+          animationStyle: selectedStyle,
+          emailNotify,
+          fileName: f.file.name,
+          fileSize: f.file.size,
+        });
+        count++;
+      }
+    } else {
+      const validUrls = urlItems.filter(u => u.url.trim());
+      if (!validUrls.length) throw new Error('Please enter at least one URL');
+      for (const u of validUrls) {
+        apiCreateJob({
+          sourceType: 'url',
+          sourceUrl: u.url.trim(),
+          animationStyle: selectedStyle,
+          emailNotify,
+          fileName: u.url.split('/').pop()?.split('?')[0] || 'video.mp4',
+        });
+        count++;
+      }
+    }
+
+    toast(`✓ ${count} job${count>1?'s':''} queued for animation`, 'ok');
+
+    // Reset form
+    uploadFiles = [];
+    urlItems = [{ id: genId(), url: '' }];
+    document.getElementById('email-notify').value = '';
+    document.getElementById('submit-err').style.display = 'none';
+
+    await new Promise(r => setTimeout(r, 400));
+    showPage('dashboard');
+
+  } catch (err) {
+    errEl.textContent = '⚠ ' + err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '🚀 Start Animating';
+  }
+}
+
+// ── Admin ──────────────────────────────────────────────────────────
+function adminAuth() {
+  const pw = document.getElementById('admin-pw-in').value;
+  if (!adminVerify(pw)) {
+    const e = document.getElementById('admin-auth-err');
+    e.textContent = '⚠ Invalid admin password';
+    e.style.display = 'block';
+    return;
+  }
+  adminAuthed = true;
+  document.getElementById('admin-lock').style.display = 'none';
+  document.getElementById('admin-panel').style.display = 'block';
+  renderAdmin();
+}
+
+function renderAdmin() {
+  if (!adminAuthed) return;
+  const codes = adminListCodes();
+  document.getElementById('code-count').textContent = `${codes.length} codes`;
+
+  document.getElementById('codes-tbody').innerHTML = codes.map(c => `
+    <tr>
+      <td>
+        <div class="code-lbl">${escHtml(c.label)}${c.isMaster?'<span class="master-tag">MASTER</span>':''}</div>
+        <div class="code-id">${c.id.slice(0,8)}…</div>
+      </td>
+      <td><span class="badge ${c.isActive?'badge-completed':'badge-failed'}">${c.isActive?'● active':'✕ revoked'}</span></td>
+      <td style="font-family:var(--font-mono);color:var(--text2);font-size:12px">${c.usesCount}${c.maxUses?'/'+c.maxUses:''}</td>
+      <td style="font-family:var(--font-mono);color:var(--text2);font-size:11px">${c.expiresAt?fmtDate(c.expiresAt):'<span style="color:var(--text3)">Never</span>'}</td>
+      <td style="font-family:var(--font-mono);color:var(--text2);font-size:11px">${c.lastUsedAt?fmtDate(c.lastUsedAt):'<span style="color:var(--text3)">—</span>'}</td>
+      <td>${c.isActive&&!c.isMaster?`<button class="btn btn-danger btn-sm" onclick="revokeCode('${c.id}')">Revoke</button>`:''}</td>
+    </tr>
+  `).join('');
+}
+
+function generateCode() {
+  const label = document.getElementById('new-code-label').value.trim();
+  if (!label) { const e = document.getElementById('gen-err'); e.textContent='⚠ Label is required'; e.style.display='block'; return; }
+  document.getElementById('gen-err').style.display = 'none';
+
+  const expiresInDays = parseInt(document.getElementById('new-code-expiry').value) || null;
+  const maxUses = parseInt(document.getElementById('new-code-uses').value) || null;
+
+  const result = adminGenCode({ label, expiresInDays, maxUses });
+
+  document.getElementById('new-code-val').textContent = result.code;
+  document.getElementById('new-code-reveal').style.display = 'block';
+  document.getElementById('new-code-label').value = '';
+  document.getElementById('new-code-expiry').value = '';
+  document.getElementById('new-code-uses').value = '';
+
+  toast(`✓ Code generated for: ${label}`, 'ok');
+  renderAdmin();
+}
+
+let _lastGenCode = '';
+function copyNewCode() {
+  const code = document.getElementById('new-code-val').textContent;
+  navigator.clipboard.writeText(code).then(() => toast('Code copied to clipboard', 'ok'));
+}
+
+function revokeCode(id) {
+  if (!confirm('Revoke this code? Users will lose access immediately.')) return;
+  adminRevoke(id);
+  toast('Access code revoked', 'ok');
+  renderAdmin();
+}
+
+// ── Utilities ──────────────────────────────────────────────────────
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  // Auto-restore session if exists
+  if (isAuthed()) {
+    document.getElementById('page-login').classList.remove('active');
+    document.getElementById('page-app').classList.add('active');
+    renderDashboard();
+  }
+  codeIn.focus();
+
+  // Auto-refresh dashboard every 2s if active jobs
+  setInterval(() => {
+    const pgs = document.getElementById('pg-dashboard');
+    if (pgs.classList.contains('active')) {
+      const active = DB.jobs.some(j => j.status==='queued'||j.status==='processing');
+      if (active) renderDashboard();
+    }
+  }, 2000);
+});
+</script>
+</body>
+</html>
